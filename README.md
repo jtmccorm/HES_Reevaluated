@@ -1,8 +1,17 @@
+---
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
 # The Hamlet Evaluation System - Reevaluated
 #### John T McCormick
 #### 28 April 2021
 
 ---
+
+### Introduction
 
 The Hamlet Evaluation System (including its precursor HAMLA) was an attempt to quantify the pacification campaign in the US-Vietnam War. In a "war without fronts" the need for quantitative metrics to measure success was paramount. Throughout the war, hundreds of thousands of observations were collected and analyzed by Army Operations Researches and civilian contractors such as RAND. All these efforts aimed to answer the question, "*Was the US winning the war in Vietnam?*"
 
@@ -12,3 +21,16 @@ This analysis seeks to answer the above questions by applying modern data analyt
 
 ---
 
+### File Structure
+
+The data processing and manipulation will be handled in a R-project before being exported to separate directory for ArcGIS analysis. Additionally, presentation ready files, interim reports and process logs will be published to a Google Doc for communication and evaluation. 
+
+`\HES_Reevaluated` - Main Directory for processing and analyzing Data
+ 
+ - `\data` - Storage bin for raw, tidy and clean data
+ - `\reports` - place for Markdown notebooks and presentation products
+ - `\src` - place for script files and processing tools
+ 
+ Google Drive - `\GIS_HES_Reevaluated` - Google Drive directory for presentation
+ 
+ - `\Documenation` - Folder for proposal and process log

@@ -1,3 +1,10 @@
+---
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
 # The Hamlet Evaluation System - Reevaluated
 #### John T McCormick
 #### 28 April 2021

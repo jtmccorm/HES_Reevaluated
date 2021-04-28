@@ -4,6 +4,8 @@
 
 ---
 
+### Introduction
+
 The Hamlet Evaluation System (including its precursor HAMLA) was an attempt to quantify the pacification campaign in the US-Vietnam War. In a "war without fronts" the need for quantitative metrics to measure success was paramount. Throughout the war, hundreds of thousands of observations were collected and analyzed by Army Operations Researches and civilian contractors such as RAND. All these efforts aimed to answer the question, "*Was the US winning the war in Vietnam?*"
 
 At the time and shortly after, many considered these metrics to be faulty, misguided and largely unsuccessful. Yet much of the historiography suggests that HES and other statistical survey techniques were not fully embraced. Crude efficiency measures such as body count and kill-death ratios are often described as the focus on commanders attempts to measure the war. If this is the case, why were more sophisticated systems such as the HES being ignored? Was the issue one of the systems themselves or officers ability to grasp statistical and geographically diffuse metrics? The simple fact is that almost no study of the Vietnam War has actually dived into the data to answer these questions. 
@@ -12,3 +14,16 @@ This analysis seeks to answer the above questions by applying modern data analyt
 
 ---
 
+### File Structure
+
+The data processing and manipulation will be handled in a R-project before being exported to separate directory for ArcGIS analysis. Additionally, presentation ready files, interim reports and process logs will be published to a Google Doc for communication and evaluation. 
+
+`\HES_Reevaluated` - Main Directory for processing and analyzing Data
+ 
+ - `\data` - Storage bin for raw, tidy and clean data
+ - `\reports` - place for Markdown notebooks and presentation products
+ - `\src` - place for script files and processing tools
+ 
+ Google Drive - `\GIS_HES_Reevaluated` - Google Drive directory for presentation
+ 
+ - `\Documenation` - Folder for proposal and process log

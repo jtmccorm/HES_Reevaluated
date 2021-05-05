@@ -59,18 +59,19 @@ hamla_tidy_df <- hamla_tidy_df %>%
 
 ### C. Misc Feature Engineering
 
-Remove useless features. Several of these have no recorded meaning in the data dictionary and others are just redundant:
+Remove useless features. Several of these have no recorded meaning in the data dictionary and others are just redundant (meaning that they could be trivially calculated from other variables):
 
   - `+PCN`, `+SCO`, `VSZ` were created by the NIPSTRAN program (which has no referenced meaning in the dictionary)
   - `RECTP` refers to hamlet level of observation
   - `NUMB` refers to a lost "GVN identifier number"
   - `PROB` no meaning provided
-  - `URBAN` **a redundant indicator** of population greater than 20,000 in hamlet
   - `VCMR` no meaning provided
   - `TEAMS` no meaning provided
+  - `URBAN` **a redundant indicator** of population greater than 20,000 in hamlet
+  - `VALID` **redundant indicator** has the hamlet been continuously rated A through E
 
 ```{r}
-hamla_tidy_df <- hamla_tidy_df %>% select(-(`+PCN`:VSZ), -RECTP, -NUMB, -(PROB1:PROB3), -(PROB5:PROB8), -VCMR, -TEAMS)
+hamla_tidy_df <- hamla_tidy_df %>% select(-(`+PCN`:VSZ), -VALID, -RECTP, -NUMB, -(PROB1:PROB3), -(PROB5:PROB8), -VCMR, -TEAMS)
 ```
 
 Some of the features are highly idiosyncratically formatted categorical variables. These features will be removed for the time being, though future analysis would likely benefit from including these:
@@ -100,5 +101,38 @@ hamla_tidy_df <- hamla_tidy_df %>%
 
 ### D. Formatting and Organizing
 
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>% 
+  mutate(population = POPUL,
+         score_security = SECUR,
+         score_development = DEVEL,
+         score_overall = CLASX,
+         score_confidence = CONFX,
+         hamlet = NAME, 
+         village = XNAME,
+         loc = POINT,
+         control_prior = CNTL6,
+         control_plantype = HTYPE,
+         control_current = CNTL7,
+         develop_status = RDSTA,
+         class = CLAS,
+         pop_reliability = POPRE,
+         security_status = SCSTA, 
+         .keep = "unused") %>%
+  select(id, date, hamlet,  loc, class, village, id_village, everything())
+```
+
+Now everything looks nice and tidy!
+
+```{r}
+hamla_tidy_df
+```
+
+## Export
+
+```{r}
+export_path <- str_c(getwd(), "/data/tidy/GIS_HAMLA.csv")
+write_csv(hamla_tidy_df, export_path, col_names = TRUE)
+```
 
 

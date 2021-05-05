@@ -1,0 +1,104 @@
+---
+title: "Exploratory Data Analysis"
+output: html_notebook
+---
+
+```{r setup}
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+library(tidyverse)
+library(lubridate)
+```
+
+## 1. Loading
+
+```{r}
+hamla_path <- str_c(getwd(), "/data/NARA/HAMLA/", sep="")
+hamla_df <- read_tsv(str_c(hamla_path, "HAMLA_1967_FS.txt", sep=""))
+```
+
+Curiously, the data-frame includes both district and hamlet evaluations. Let's take a look 
+
+```{r}
+hamla_df %>% filter(RECTP==0)
+```
+
+We can see that there are few features reliably associated with the district level observations. We'll remove those and stick to a a hamlet level analysis.
+
+```{r}
+hamla_tidy_df <- hamla_df%>% filter(RECTP==1)
+```
+
+## 2. Cleaning
+
+### A. Identification codes
+
+Right now there are no id codes assigned to each hamlet. Since names may be repeated in different locations, we need to fix that. This can be easily accomplished by merging the administrative id codes of higher headquarters
+
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>%
+  mutate(id = str_c(CHAM, PHAM, DHAM, VHAM, HHAM),
+         id_country = CHAM,
+         id_province = str_c(CHAM, PHAM), 
+         id_district = str_c(CHAM, PHAM, DHAM),
+         id_village = str_c(CHAM, PHAM, DHAM, VHAM),
+         .keep = "unused") %>%
+  select(id, id_country, id_province, id_district, id_village, everything())
+```
+
+
+### B. Date of observation
+
+The date of each observation is stored idiosyncratically, we'll fix that as well..
+
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>%
+  mutate(DATE = str_c("19",str_sub(DATE, 1L, 2L), "-",str_sub(DATE, 3L, 4L), "-01"),
+         date = as_date(DATE)) %>%
+  select(-DATE)
+```
+
+### C. Misc Feature Engineering
+
+Remove useless features. Several of these have no recorded meaning in the data dictionary and others are just redundant:
+
+  - `+PCN`, `+SCO`, `VSZ` were created by the NIPSTRAN program (which has no referenced meaning in the dictionary)
+  - `RECTP` refers to hamlet level of observation
+  - `NUMB` refers to a lost "GVN identifier number"
+  - `PROB` no meaning provided
+  - `URBAN` **a redundant indicator** of population greater than 20,000 in hamlet
+  - `VCMR` no meaning provided
+  - `TEAMS` no meaning provided
+
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>% select(-(`+PCN`:VSZ), -RECTP, -NUMB, -(PROB1:PROB3), -(PROB5:PROB8), -VCMR, -TEAMS)
+```
+
+Some of the features are highly idiosyncratically formatted categorical variables. These features will be removed for the time being, though future analysis would likely benefit from including these:
+
+  - `XPROB` contains a string of indicators on 14 different types of events 
+  - `MLAC`, `PLAC`, `SECU` contain information on military and political activities of the VC and GVN **(summarized in SECUR score)**
+  - `ADPL`, `HEW`, `ECDV` contain information on the economic, administrative and health status of the local population. **(summarized in the DEVEL score)**
+  
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>% select(-(MLAC:ECDV), -XPROB)
+```
+
+As a proof of concept, let's split up a less complex idiosyncratic categorical into its components.
+
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>%
+  mutate(elect_num_officials = str_sub(ELECT, 1L, 2L),
+         elect_reliability = str_sub(ELECT, 3L), .keep="unused")
+```
+
+Finally, lets treat non-observations as NAs...
+
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>% 
+  mutate(across(POPUL:CONFX, ~ if_else(.x==0, NA_real_, .x, missing=NA_real_)))
+```
+
+### D. Formatting and Organizing
+
+
+

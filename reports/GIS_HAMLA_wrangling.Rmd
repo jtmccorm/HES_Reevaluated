@@ -128,11 +128,77 @@ Now everything looks nice and tidy!
 hamla_tidy_df
 ```
 
-## Export
+## 3. Geocoding (MGRS to lat-long)
+
+The coordinates are unfortunately coded in incomplete MGRS. First, we'll standardize the format a bit and then clean to remove improperly formatted hamlet locations that can not be rectified.
+
+```{r}
+# standardize format
+hamla_tidy_df <- hamla_tidy_df %>% 
+  mutate(loc = paste(substr(loc,1L,2L), paste0(substr(loc,3L,5L),'0', substr(loc,6L,8L), '0')))
+```
+
+
+```{r}
+# remove invalid locations
+hamla_tidy_df <- hamla_tidy_df %>% 
+  mutate(loc = ifelse(test = str_detect(loc, "^[:alpha:]{2} [:digit:]{8}$"),
+                      yes = loc, no = NA_character_)) %>%
+  filter(!is.na(loc))
+```
+
+We removed about a thousand observations with invalid locations. Now we can focus on adding the map group (GZD) to the coordinates.
+
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>% 
+  mutate(loc = case_when(
+    # when vertical square identifier is in one GZD
+    str_detect(substr(loc,1L,1L), "[VW]") ~ paste("48P", loc),
+    str_detect(substr(loc,1L,1L), "C") ~ paste("49P", loc),
+    # when vertical square identifier is split
+    str_detect(substr(loc,1L,1L), "[YZXAB]") ~ case_when(
+          # when  100km square is above split (Q)
+          str_detect(substr(loc,1L,2L), "[YZX][DE]") ~ paste("48Q", loc),
+          str_detect(substr(loc,1L,2L), "[AB]U") ~ paste("49Q", loc),
+          # when 100km square is below split (P)
+          str_detect(substr(loc,1L,2L), "[YZX][^C]") ~ paste("48P", loc),
+          str_detect(substr(loc,1L,2L), "[AB][^T]") ~ paste("49P", loc),
+          # when 100km square is split between two GZD (split by northing)
+          as.numeric(substr(loc,8L,10L)) >= 707 ~ case_when( # above divider (Q row)
+                # select by first grid-square code
+                str_detect(substr(loc,1L,1L), "[YZX]") ~ paste("48Q", loc),
+                str_detect(substr(loc,1L,1L), "[AB]") ~ paste("49Q", loc),
+          ),
+          as.numeric(substr(loc,8L,10L)) < 707 ~ case_when( # below divider (P row)
+                # select by first grid-square code
+                str_detect(substr(loc,1L,1L), "[YZX]") ~ paste("48P", loc),
+                str_detect(substr(loc,1L,1L), "[AB]") ~ paste("49P", loc),
+          ),
+    ),
+  ))
+```
+
+
+
+## 4. Export
 
 ```{r}
 export_path <- str_c(getwd(), "/data/tidy/GIS_HAMLA.csv")
 write_csv(hamla_tidy_df, export_path, col_names = TRUE)
 ```
+
+## *Appendix:* 
+
+### A. Known Data Inconsistencies:
+ 
+ 1. Location (MGRS)
+    * not full MGRS, no map group provided
+    * not standard across the hamlets record
+    * only six-digit accuracy (but not all are six-digit accuracy)
+    
+2. Hamlet & Village Name
+    * inconsistency between dash `-` and space ` `
+    * 
+    
 
 

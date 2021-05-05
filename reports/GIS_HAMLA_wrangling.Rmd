@@ -25,7 +25,7 @@ hamla_df %>% filter(RECTP==0)
 We can see that there are few features reliably associated with the district level observations. We'll remove those and stick to a a hamlet level analysis.
 
 ```{r}
-hamla_tidy_df <- hamla_df%>% filter(RECTP==1)
+hamla_tidy_df <- hamla_df %>% filter(RECTP==1)
 ```
 
 ## 2. Cleaning

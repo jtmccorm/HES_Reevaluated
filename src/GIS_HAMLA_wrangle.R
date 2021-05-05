@@ -103,3 +103,5 @@ hamla_extract <- function(append_data, year_str){
 
 # B. Extract each data source
 hamla_extract(append_data = FALSE, year_str = "1967")
+hamla_extract(append_data = TRUE, year_str = "1968")
+hamla_extract(append_data = TRUE, year_str = "1969")

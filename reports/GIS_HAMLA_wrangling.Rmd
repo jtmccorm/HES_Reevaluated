@@ -1,6 +1,7 @@
 ---
-title: "Exploratory Data Analysis"
-output: html_notebook
+title: "Data Wrangling 1 - HAMLA"
+author: "John T McCormick (jtmccorm)"
+output: html_document
 ---
 
 ```{r setup}
@@ -57,9 +58,89 @@ hamla_tidy_df <- hamla_tidy_df %>%
   select(-DATE)
 ```
 
-### C. Misc Feature Engineering
+### C. GVN and VC activities
 
-Remove useless features. Several of these have no recorded meaning in the data dictionary and others are just redundant (meaning that they could be trivially calculated from other variables):
+Some of the variables contained in the date are highly idiosyncratically formatted categorical variables. A subset of these (`MLAC`, `PLAC`, `SECU`, `ADPL`) contain information on military and political activities of the VC and GVN. 
+
+Lets tackle the VC features first and assign them descriptive names derived from the NARA documentation. Each attribute was scored between `A-E` were A represents highly favorable to the South Vietnamese and US effort and E represents highly favorable to the communist campaign. Thus, these represent more of a subjective assessment by the US advisers than raw data on the provinces.
+
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>%
+  mutate(
+    # Extract Features from MLAC 
+    vc_mil_local_forces = str_sub(MLAC, 1L, 1L), # Local Forces refer to local guerrilla/ militia forces supporting the VC
+    vc_mil_external_forces = str_sub(MLAC, 2L, 2L), # External Forces refer to VC forces from outside the hamlet
+    vc_mil_activities = str_sub(MLAC, 3L, 3L), # level of VC military activities in the hamlet
+    vc_mil_confidence = str_sub(MLAC, 4L, 4L), # confidence the adviser has in assigned levels
+    vc_mil_confidence = ifelse(vc_mil_confidence=="", NA, vc_mil_confidence),
+    # Extract Features from PLAC
+    vc_pol_hamlet_network = str_sub(PLAC, 1L, 1L), # the sophistication of the VC network within the hamlet
+    vc_pol_village_network = str_sub(PLAC, 2L, 2L), # the sophistication of the VC network throughout the village area
+    # The nework's were initial described as "infrastructure in the parlance of the Vietnam era
+    vc_pol_activities = str_sub(PLAC, 3L, 3L), # level of VC political activities in the hamlet
+    vc_pol_confidence = str_sub(PLAC, 4L, 4L), # confidence the adviser has in assigned levels
+    vc_pol_confidence = ifelse(vc_pol_confidence=="", NA, vc_pol_confidence)) %>%
+  select(-MLAC, -PLAC)
+```
+
+
+Now lets dissect the GVN related features. These follow a similar structure to the VC defined variables although has more specificity on the political evaluation.
+
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>% 
+  mutate(
+    # extract features from SECU
+    gvn_mil_local_forces = str_sub(SECU, 1L, 1L),
+    gvn_mil_external_forces = str_sub(SECU, 2L, 2L),
+    gvn_mil_activities = str_sub(SECU, 3L, 3L),
+    gvn_mil_confidence = str_sub(SECU, 4L, 4L),
+    gvn_mil_confidence = ifelse(gvn_mil_confidence=="", NA, gvn_mil_confidence),
+    # extract features from ADPL
+    gvn_pol_management = str_sub(ADPL, 1L, 1L),
+    gvn_pol_popular_support = str_sub(ADPL, 2L, 2L),
+    gvn_pol_info_ops = str_sub(ADPL, 3L, 3L),
+    gvn_pol_confidence = str_sub(ADPL, 4L, 4L),
+    gvn_pol_confidence = ifelse(gvn_pol_confidence=="", NA, gvn_pol_confidence),
+  ) %>%
+  select(-SECU, -ADPL)
+```
+
+### D. Lcoal Socio-Economic Factors
+
+Columns `HEW` (Health Education, Welfare) and `ECDV` (Economic Development) have been treated in a similar method as the VC and GVN activities records above.
+
+```{r}
+hamla_tidy_df <- hamla_tidy_df %>%
+  # extract features from HEW 
+  mutate(
+    ppl_soc_health = str_sub(HEW, 1L, 1L),
+    ppl_soc_education = str_sub(HEW, 2L, 2L),
+    ppl_soc_welfare = str_sub(HEW, 3L, 3L),
+    ppl_soc_confidence = str_sub(HEW, 4L,4L), # advisors confidence in ratings
+    ppl_soc_confidence = ifelse(ppl_soc_confidence=="", NA, ppl_soc_confidence)
+  , .keep="unused") %>%  # remove old column
+  # extract features from ECDV 
+  mutate(
+    ppl_econ_self_help = str_sub(ECDV, 1L,1L),
+    ppl_econ_public_works = str_sub(ECDV, 2L, 2L),
+    ppl_econ_improv_programs = str_sub(ECDV, 3L, 3L),
+    ppl_econ_confidence = str_sub(ECDV, 4L, 4L), # advisors confidence in ratings
+    ppl_econ_confidence = ifelse(ppl_econ_confidence=="", NA, ppl_econ_confidence)
+  , .keep="unused") # remove old column
+```
+
+## E. Significant Events 
+
+The HAMLA file contained a variable `XPROB`contains a 14 numeric string that indicates the occurence of a number of significant events within the village. 
+
+```{r}
+as.character(hamla_tidy_df$XPROB) %>% str_length()
+```
+
+
+### D. Misc Feature Engineering
+
+*Remove useless features.* Several of these have no recorded meaning in the data dictionary and others are just redundant (meaning that they could be trivially calculated from other variables):
 
   - `+PCN`, `+SCO`, `VSZ` were created by the NIPSTRAN program (which has no referenced meaning in the dictionary)
   - `RECTP` refers to hamlet level of observation
@@ -78,7 +159,7 @@ Some of the features are highly idiosyncratically formatted categorical variable
 
   - `XPROB` contains a string of indicators on 14 different types of events 
   - `MLAC`, `PLAC`, `SECU` contain information on military and political activities of the VC and GVN **(summarized in SECUR score)**
-  - `ADPL`, `HEW`, `ECDV` contain information on the economic, administrative and health status of the local population. **(summarized in the DEVEL score)**
+  - , `HEW`, `ECDV` contain information on the economic, administrative and health status of the local population. **(summarized in the DEVEL score)**
   
 ```{r}
 hamla_tidy_df <- hamla_tidy_df %>% select(-(MLAC:ECDV), -XPROB)
@@ -111,7 +192,7 @@ hamla_tidy_df <- hamla_tidy_df %>%
          hamlet = NAME, 
          village = XNAME,
          loc = POINT,
-         control_prior = CNTL6,
+         control_Dec1966 = CNTL6,
          control_plantype = HTYPE,
          control_current = CNTL7,
          develop_status = RDSTA,
@@ -182,7 +263,7 @@ hamla_tidy_df <- hamla_tidy_df %>%
 
 ## 4. Export
 
-```{r}
+```{r, eval=FALSE}
 export_path <- str_c(getwd(), "/data/tidy/GIS_HAMLA.csv")
 write_csv(hamla_tidy_df, export_path, col_names = TRUE)
 ```
